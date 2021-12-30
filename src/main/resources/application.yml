@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: work-calendar-ms
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL-HOST}:${MYSQL-PORT:3306}/${MYSQL-DATABASES}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    username: ${MYSQL-USER}
+    password: ${MYSQL-PASSWORD}
+server:
+  port: 9092
