@@ -4,6 +4,7 @@ import com.oysq.workcalendarms.entity.TestContent;
 import com.oysq.workcalendarms.mapper.TestContentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +20,11 @@ public class TestController {
         testContentMapper.insert(
                 TestContent.builder().content("测试一下").build()
         );
+        return "oysq";
+    }
+
+    @PostMapping("tt")
+    public String tt() {
         return "oysq";
     }
 
