@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.oysq</groupId>
     <artifactId>work-calendar-ms</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>work-calendar-ms</name>
     <description>work-calendar-ms</description>
     <properties>

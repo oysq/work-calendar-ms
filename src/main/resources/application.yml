@@ -3,8 +3,13 @@ spring:
     name: work-calendar-ms
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL-HOST}:${MYSQL-PORT:3306}/${MYSQL-DATABASES}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    url: jdbc:mysql://${MYSQL-HOST:127.0.0.1}:${MYSQL-PORT:13307}/${MYSQL-DATABASES:work_calendar}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
     username: ${MYSQL-USER}
     password: ${MYSQL-PASSWORD}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 10
+      max-lifetime: 30000
+      connection-test-query: SELECT 1
 server:
   port: 9092

@@ -24,13 +24,14 @@ public class UserController {
 
     @PostMapping("/checkToken")
     public Res checkToken(@RequestBody User user) {
+
         if (StrUtil.hasEmpty(user.getToken())) {
             return Res.fail("token不可空");
         }
         User resUser = userService.selectByToken(user.getToken());
         if (resUser != null) {
             if (resUser.getOverdueTime().compareTo(System.currentTimeMillis()) > 0) {
-                return Res.success("验证成功", null);
+                return Res.success("验证成功", MapUtil.of("name", resUser.getUserName()));
             }
         }
         return Res.fail("验证失败");
