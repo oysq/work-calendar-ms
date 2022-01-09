@@ -57,9 +57,9 @@ public class UserController {
     @PostMapping("/checkToken")
     public Res checkToken(@RequestBody User user) {
         try {
-            String userName = userService.checkToken(user.getToken());
-            if (StrUtil.isNotBlank(userName)) {
-                return Res.success("验证成功", MapUtil.of("name", userName));
+            User resUser = userService.checkToken(user.getToken());
+            if (null != resUser) {
+                return Res.success("验证成功", resUser);
             }
             return Res.fail("验证未通过");
         } catch (Exception e) {
@@ -74,8 +74,8 @@ public class UserController {
     @PostMapping("refreshToken")
     public Res refreshToken(@RequestBody User user) {
         try {
-            String token = userService.updateToken(user);
-            return Res.success(MapUtil.of("token", token));
+            User resUser = userService.updateToken(user);
+            return Res.success(resUser);
         } catch (Exception e) {
             log.error("insertUser 异常", e);
             return Res.fail(e.getMessage());

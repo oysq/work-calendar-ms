@@ -22,11 +22,11 @@ public interface UserService {
     /**
      * 校验Token
      */
-    String checkToken(String token);
+    User checkToken(String token);
 
     /**
      * 更新Token
      */
-    String updateToken(User user);
+    User updateToken(User user);
 
 }

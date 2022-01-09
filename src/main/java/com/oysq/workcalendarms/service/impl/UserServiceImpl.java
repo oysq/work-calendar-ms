@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String checkToken(String token) {
+    public User checkToken(String token) {
         if (StrUtil.isBlank(token)) {
             throw new RuntimeException("token不可空");
         }
@@ -85,10 +85,13 @@ public class UserServiceImpl implements UserService {
             User resUser = userList.get(0);
             if (resUser.getOverdueTime().compareTo(System.currentTimeMillis()) > 0) {
                 log.info("【checkToken】验证通过：" + resUser.getUserName());
-                return resUser.getUserName();
+                return User.builder()
+                        .userId(resUser.getUserId())
+                        .userName(resUser.getUserName())
+                        .build();
             } else {
                 log.info("【checkToken】Token过期：" + resUser.getUserName());
-                return "";
+                return null;
             }
         } else {
             throw new RuntimeException("不存在的token");
@@ -96,7 +99,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String updateToken(User user) {
+    public User updateToken(User user) {
         if (StrUtil.hasEmpty(user.getUserName(), user.getPassword())) {
             throw new RuntimeException("用户名和密码不可空");
         }
@@ -111,6 +114,10 @@ public class UserServiceImpl implements UserService {
         userMapper.updateById(
                 User.builder().userId(resUser.getUserId()).token(token).buildTime(buildTime).overdueTime(overdueTime).build()
         );
-        return token;
+        return User.builder()
+                .userId(resUser.getUserId())
+                .userName(resUser.getUserName())
+                .token(token)
+                .build();
     }
 }
