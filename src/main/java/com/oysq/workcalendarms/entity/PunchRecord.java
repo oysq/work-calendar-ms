@@ -1,5 +1,7 @@
 package com.oysq.workcalendarms.entity;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,6 +15,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 @TableName("punch_record")
 @Data
@@ -57,6 +62,12 @@ public class PunchRecord {
      */
     @TableField("multiply_rate")
     private BigDecimal multiplyRate;
+
+    /**
+     * 加班时长
+     */
+    @TableField("overtime_duration")
+    private BigDecimal overtimeDuration;
 
     /**
      * 加班工资
@@ -107,17 +118,68 @@ public class PunchRecord {
     /**
      * 计算加班费
      */
-    public static BigDecimal calcOvertimePay(PunchRecord record) {
+    public static void calcOvertime(PunchRecord record) {
         if (null == record
-                || StrUtil.hasBlank(record.getStartTime(), record.getEndTime())
+                || StrUtil.hasBlank(record.getPunchDate(), record.getStartTime(), record.getEndTime())
                 || null == record.getPostSalary()
                 || null == record.getMultiplyRate()) {
-            return BigDecimal.ZERO;
+            return;
         }
-        DateTime startTime = DateUtil.parse(record.getStartTime(), "yyyy/MM/dd HH:mm:ss");
-        DateTime endTime = DateUtil.parse(record.getEndTime(), "yyyy/MM/dd HH:mm:ss");
 
-        return BigDecimal.ZERO;
+        // 真实时间
+        DateTime startTime = DateUtil.parse(record.getStartTime(), "yyyy/MM/dd HH:mm:ss").setField(DateField.SECOND, 0);
+        DateTime endTime = DateUtil.parse(record.getEndTime(), "yyyy/MM/dd HH:mm:ss").setField(DateField.SECOND, 0);
+
+        // 取整时间
+        if (startTime.getField(DateField.MINUTE) != 0 && startTime.getField(DateField.MINUTE) != 30) {
+            if(startTime.isBefore(new DateTime(startTime).setField(DateField.MINUTE, 30))) {
+                startTime.setField(DateField.MINUTE, 30);
+            } else {
+                startTime.setField(DateField.MINUTE, 0);
+                startTime = DateUtil.offsetHour(startTime, 1);
+            }
+        }
+        if (endTime.getField(DateField.MINUTE) != 0 && endTime.getField(DateField.MINUTE) != 30) {
+            if(endTime.isBefore(new DateTime(endTime).setField(DateField.MINUTE, 30))) {
+                endTime.setField(DateField.MINUTE, 0);
+                endTime = DateUtil.offsetHour(endTime, -1);
+            } else {
+                endTime.setField(DateField.MINUTE, 30);
+            }
+        }
+
+        // 获取半小时列表
+        List<DateTime> rangeList = DateUtil.rangeToList(startTime, endTime, DateField.MINUTE, 30);
+        if(CollUtil.isNotEmpty(rangeList)) {
+            // 以开始时间标记每个半小时，所以抹除最后一个时刻
+            rangeList.remove(rangeList.size()-1);
+            if(CollUtil.isNotEmpty(rangeList)) {
+                // 抹除两个区间
+                ArrayList<DateTime> excludeList = CollUtil.newArrayList(
+                        DateUtil.parse(record.getPunchDate() + " 12:00:00", "yyyy/MM/dd HH:mm:ss"),
+                        DateUtil.parse(record.getPunchDate() + " 12:30:00", "yyyy/MM/dd HH:mm:ss"),
+                        DateUtil.parse(record.getPunchDate() + " 17:30:00", "yyyy/MM/dd HH:mm:ss")
+                );
+                rangeList.removeAll(excludeList);
+            }
+        }
+
+        // 得到加班时长
+        record.setOvertimeDuration(new BigDecimal(rangeList.size()).multiply(new BigDecimal("0.5")));
+
+        // 累计满1小时才有加班工资
+        if(record.getOvertimeDuration().compareTo(BigDecimal.ONE) >= 0) {
+            // 得到加班工资，保留两位小数
+            // ((g/21.78)/8)*1.5
+            BigDecimal res1 = record.getPostSalary().divide(new BigDecimal("21.78"), 6, RoundingMode.HALF_UP);
+            BigDecimal res2 = res1.divide(new BigDecimal("8"), 6, RoundingMode.HALF_UP);
+            BigDecimal res3 = res2.multiply(record.getMultiplyRate()).setScale(6, RoundingMode.HALF_UP);
+            BigDecimal overtimePay = res3.multiply(record.getOvertimeDuration()).setScale(2, RoundingMode.HALF_UP);
+            record.setOvertimePay(overtimePay);
+        } else {
+            record.setOvertimePay(BigDecimal.ZERO);
+        }
+
 
     }
 

@@ -97,7 +97,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         // 更新数
         dbRecord.setStartTime(record.getStartTime());
         dbRecord.setPostSalary(user.getPostSalary());
-        dbRecord.setOvertimePay(PunchRecord.calcOvertimePay(dbRecord));
+        PunchRecord.calcOvertime(dbRecord);
 
         // 入库
         updatePunch(dbRecord);
@@ -131,7 +131,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         // 更新数据
         dbRecord.setEndTime(record.getEndTime());
         dbRecord.setPostSalary(user.getPostSalary());
-        dbRecord.setOvertimePay(PunchRecord.calcOvertimePay(dbRecord));
+        PunchRecord.calcOvertime(dbRecord);
 
         // 入库
         updatePunch(dbRecord);
@@ -164,7 +164,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         // 更新数据
         dbRecord.setMultiplyRate(record.getMultiplyRate());
         dbRecord.setPostSalary(user.getPostSalary());
-        dbRecord.setOvertimePay(PunchRecord.calcOvertimePay(dbRecord));
+        PunchRecord.calcOvertime(dbRecord);
 
         // 入库
         updatePunch(dbRecord);
