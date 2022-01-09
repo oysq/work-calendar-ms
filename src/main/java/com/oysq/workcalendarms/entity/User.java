@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @TableName("user")
 @Data
 @Builder
@@ -38,6 +40,10 @@ public class User {
 
     @TableField("overdue_time")
     private Long overdueTime;
+
+    /** 岗位薪资 **/
+    @TableField("post_salary")
+    private BigDecimal postSalary;
 
 
 }
