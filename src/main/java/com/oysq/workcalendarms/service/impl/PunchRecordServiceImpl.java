@@ -12,6 +12,7 @@ import com.oysq.workcalendarms.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -175,18 +176,24 @@ public class PunchRecordServiceImpl implements PunchRecordService {
     public List<PunchRecord> selectRecord(String userId, String startDate, String endDate) {
 
         // 基础校验
-        if (StrUtil.hasBlank(userId, startDate, endDate)) {
+        if (StrUtil.hasBlank(userId)) {
             throw new RuntimeException("参数缺失");
         }
 
+        // 构造查询
+        LambdaQueryWrapper<PunchRecord> queryWrapper = new LambdaQueryWrapper<PunchRecord>()
+                .eq(PunchRecord::getUserId, userId)
+                .orderByAsc(PunchRecord::getPunchDate);
+
+        if(StrUtil.isNotBlank(startDate)) {
+            queryWrapper.ge(PunchRecord::getPunchDate, startDate);
+        }
+        if(StrUtil.isNotBlank(endDate)) {
+            queryWrapper.le(PunchRecord::getPunchDate, endDate);
+        }
+
         // 查询并返回
-        return punchRecordMapper.selectList(
-                new LambdaQueryWrapper<PunchRecord>()
-                        .eq(PunchRecord::getUserId, userId)
-                        .ge(PunchRecord::getPunchDate, startDate)
-                        .le(PunchRecord::getPunchDate, endDate)
-                        .orderByAsc(PunchRecord::getPunchDate)
-        );
+        return punchRecordMapper.selectList(queryWrapper);
     }
 
 }
