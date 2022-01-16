@@ -1,6 +1,9 @@
 package com.oysq.workcalendarms.service;
 
+import com.oysq.workcalendarms.entity.PunchRecord;
 import com.oysq.workcalendarms.entity.User;
+
+import java.util.Map;
 
 public interface UserService {
 
@@ -23,6 +26,13 @@ public interface UserService {
      * 校验Token
      */
     User checkToken(String token);
+
+    /**
+     * token失败直接抛出异常，用于鉴权
+     */
+    void checkTokenSecurity(String token, Map<String, String> param);
+    void checkTokenSecurity(String token, PunchRecord punchRecord);
+    void checkTokenSecurity(String token, User user);
 
     /**
      * 更新Token

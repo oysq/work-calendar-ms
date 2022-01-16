@@ -7,10 +7,7 @@ import com.oysq.workcalendarms.entity.User;
 import com.oysq.workcalendarms.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -86,8 +83,9 @@ public class UserController {
      * 更新岗位薪资
      */
     @PostMapping("updatePostSalary")
-    public Res updatePostSalary(@RequestBody User user) {
+    public Res updatePostSalary(@RequestHeader(value = "C-TOKEN") String cToken, @RequestBody User user) {
         try {
+            userService.checkTokenSecurity(cToken, user);
             userService.updatePostSalary(user);
             return Res.success("更新成功");
         } catch (Exception e) {

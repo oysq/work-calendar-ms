@@ -4,10 +4,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.oysq.workcalendarms.entity.PunchRecord;
 import com.oysq.workcalendarms.entity.User;
 import com.oysq.workcalendarms.mapper.UserMapper;
 import com.oysq.workcalendarms.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -102,6 +105,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void checkTokenSecurity(String token, Map<String, String> param) {
+        User user = this.checkToken(token);
+        if (null == user) {
+            throw new RuntimeException("鉴权失败");
+        }
+        param.put("userId", user.getUserId());
+    }
+
+    @Override
+    public void checkTokenSecurity(String token, PunchRecord punchRecord) {
+        User user = this.checkToken(token);
+        if (null == user) {
+            throw new RuntimeException("鉴权失败");
+        }
+        punchRecord.setUserId(user.getUserId());
+    }
+
+    @Override
+    public void checkTokenSecurity(String token, User user) {
+        User resUser = this.checkToken(token);
+        if (null == resUser) {
+            throw new RuntimeException("鉴权失败");
+        }
+        if(null == user) {
+            user = new User();
+        }
+        user.setUserId(resUser.getUserId());
+    }
+
+    @Override
     public User updateToken(User user) {
         if (StrUtil.hasEmpty(user.getUserName(), user.getPassword())) {
             throw new RuntimeException("用户名和密码不可空");
@@ -132,19 +165,19 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("异常参数");
         }
 
-        if(null == user.getPostSalary()) {
+        if (null == user.getPostSalary()) {
             user.setPostSalary(BigDecimal.ZERO);
         } else if (user.getPostSalary().compareTo(BigDecimal.ZERO) < 0) {
             throw new RuntimeException("岗位薪资不可小于0");
         }
 
         // 更新
-        if(userMapper.updateById(
+        if (userMapper.updateById(
                 User
-                    .builder()
-                    .userId(user.getUserId())
-                    .postSalary(user.getPostSalary().setScale(2, RoundingMode.HALF_UP))
-                    .build()
+                        .builder()
+                        .userId(user.getUserId())
+                        .postSalary(user.getPostSalary().setScale(2, RoundingMode.HALF_UP))
+                        .build()
         ) < 0) {
             throw new RuntimeException("更新失败");
         }

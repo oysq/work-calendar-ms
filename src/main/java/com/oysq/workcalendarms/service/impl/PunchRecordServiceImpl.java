@@ -12,7 +12,6 @@ import com.oysq.workcalendarms.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,12 +27,36 @@ public class PunchRecordServiceImpl implements PunchRecordService {
     @Autowired
     private PunchRecordMapper punchRecordMapper;
 
+    @Override
+    public List<PunchRecord> selectRecord(String userId, String startDate, String endDate) {
+
+        // 基础校验
+        if (StrUtil.hasBlank(userId)) {
+            throw new RuntimeException("参数缺失");
+        }
+
+        // 构造查询
+        LambdaQueryWrapper<PunchRecord> queryWrapper = new LambdaQueryWrapper<PunchRecord>()
+                .eq(PunchRecord::getUserId, userId)
+                .orderByAsc(PunchRecord::getPunchDate);
+
+        if(StrUtil.isNotBlank(startDate)) {
+            queryWrapper.ge(PunchRecord::getPunchDate, startDate);
+        }
+        if(StrUtil.isNotBlank(endDate)) {
+            queryWrapper.le(PunchRecord::getPunchDate, endDate);
+        }
+
+        // 查询并返回
+        return punchRecordMapper.selectList(queryWrapper);
+    }
+
     /**
-     * 构建并获取一条打卡数据
+     * 获取一条打卡数据，不存在则创建入库
      */
-    private PunchRecord getPunch(String userId, String punchDate) {
+    private PunchRecord getPunchOrInsert(String userId, String punchDate) {
         if (StrUtil.hasBlank(userId, punchDate)) {
-            throw new RuntimeException("主键参数缺失");
+            throw new RuntimeException("参数信息缺失");
         }
         List<PunchRecord> punchRecords = punchRecordMapper.selectList(
                 new LambdaQueryWrapper<PunchRecord>()
@@ -58,6 +81,27 @@ public class PunchRecordServiceImpl implements PunchRecordService {
             }
             return newRecord;
         }
+    }
+
+    /**
+     * 获取一条打卡数据，不存在则抛出异常
+     */
+    private PunchRecord getPunchOrError(String userId, String punchDate) {
+        if (StrUtil.hasBlank(userId, punchDate)) {
+            throw new RuntimeException("参数信息缺失");
+        }
+        List<PunchRecord> punchRecords = punchRecordMapper.selectList(
+                new LambdaQueryWrapper<PunchRecord>()
+                        .eq(PunchRecord::getUserId, userId)
+                        .eq(PunchRecord::getPunchDate, punchDate)
+        );
+        if (CollUtil.isNotEmpty(punchRecords)) {
+            if (punchRecords.size() > 1) {
+                throw new RuntimeException("数据异常，请联系管理员检查");
+            }
+            return punchRecords.get(0);
+        }
+        throw new RuntimeException("打卡信息不存在");
     }
 
     /**
@@ -90,7 +134,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         }
 
         // 得到记录
-        PunchRecord dbRecord = getPunch(user.getUserId(), record.getPunchDate());
+        PunchRecord dbRecord = getPunchOrInsert(user.getUserId(), record.getPunchDate());
         record.setEndTime(dbRecord.getEndTime());
 
         // 校验时间合法
@@ -124,7 +168,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         }
 
         // 得到记录
-        PunchRecord dbRecord = getPunch(user.getUserId(), record.getPunchDate());
+        PunchRecord dbRecord = getPunchOrInsert(user.getUserId(), record.getPunchDate());
         record.setStartTime(dbRecord.getStartTime());
 
         // 校验时间合法
@@ -161,7 +205,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         }
 
         // 得到记录
-        PunchRecord dbRecord = getPunch(user.getUserId(), record.getPunchDate());
+        PunchRecord dbRecord = getPunchOrInsert(user.getUserId(), record.getPunchDate());
 
         // 更新数据
         dbRecord.setMultiplyRate(record.getMultiplyRate());
@@ -174,27 +218,26 @@ public class PunchRecordServiceImpl implements PunchRecordService {
     }
 
     @Override
-    public List<PunchRecord> selectRecord(String userId, String startDate, String endDate) {
+    public void delete(PunchRecord record) {
 
-        // 基础校验
-        if (StrUtil.hasBlank(userId)) {
-            throw new RuntimeException("参数缺失");
+        // 非空校验
+        PunchRecord.checkBlank(record);
+
+        // 获取用户
+        User user = userService.selectByUserId(record.getUserId());
+        if (null == user) {
+            throw new RuntimeException("用户查询失败");
         }
 
-        // 构造查询
-        LambdaQueryWrapper<PunchRecord> queryWrapper = new LambdaQueryWrapper<PunchRecord>()
-                .eq(PunchRecord::getUserId, userId)
-                .orderByAsc(PunchRecord::getPunchDate);
+        // 得到记录
+        PunchRecord dbRecord = getPunchOrError(user.getUserId(), record.getPunchDate());
 
-        if(StrUtil.isNotBlank(startDate)) {
-            queryWrapper.ge(PunchRecord::getPunchDate, startDate);
-        }
-        if(StrUtil.isNotBlank(endDate)) {
-            queryWrapper.le(PunchRecord::getPunchDate, endDate);
+        // 删除
+        if(punchRecordMapper.deleteById(dbRecord.getPunchId()) <= 0) {
+            throw new RuntimeException("数据删除失败");
         }
 
-        // 查询并返回
-        return punchRecordMapper.selectList(queryWrapper);
     }
+
 
 }
