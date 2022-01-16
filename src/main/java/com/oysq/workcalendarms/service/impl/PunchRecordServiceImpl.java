@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -149,7 +150,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         if (record.getMultiplyRate() == null) {
             throw new RuntimeException("倍率不可空");
         }
-        if (!GlobalConstant.MULTIPLY_RATE_LIST.contains(record.getMultiplyRate().toString())) {
+        if (GlobalConstant.MULTIPLY_RATE_LIST.stream().noneMatch(item -> new BigDecimal(item).compareTo(record.getMultiplyRate()) == 0)) {
             throw new RuntimeException("倍率不存在");
         }
 

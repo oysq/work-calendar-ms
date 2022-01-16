@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -88,6 +90,7 @@ public class UserServiceImpl implements UserService {
                 return User.builder()
                         .userId(resUser.getUserId())
                         .userName(resUser.getUserName())
+                        .postSalary(resUser.getPostSalary())
                         .build();
             } else {
                 log.info("【checkToken】Token过期：" + resUser.getUserName());
@@ -118,6 +121,32 @@ public class UserServiceImpl implements UserService {
                 .userId(resUser.getUserId())
                 .userName(resUser.getUserName())
                 .token(token)
+                .postSalary(resUser.getPostSalary())
                 .build();
+    }
+
+    @Override
+    public void updatePostSalary(User user) {
+
+        if (null == user || StrUtil.isBlank(user.getUserId())) {
+            throw new RuntimeException("异常参数");
+        }
+
+        if(null == user.getPostSalary()) {
+            user.setPostSalary(BigDecimal.ZERO);
+        } else if (user.getPostSalary().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("岗位薪资不可小于0");
+        }
+
+        // 更新
+        if(userMapper.updateById(
+                User
+                    .builder()
+                    .userId(user.getUserId())
+                    .postSalary(user.getPostSalary().setScale(2, RoundingMode.HALF_UP))
+                    .build()
+        ) < 0) {
+            throw new RuntimeException("更新失败");
+        }
     }
 }

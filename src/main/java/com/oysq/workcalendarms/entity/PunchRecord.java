@@ -142,7 +142,6 @@ public class PunchRecord {
         if (endTime.getField(DateField.MINUTE) != 0 && endTime.getField(DateField.MINUTE) != 30) {
             if(endTime.isBefore(new DateTime(endTime).setField(DateField.MINUTE, 30))) {
                 endTime.setField(DateField.MINUTE, 0);
-                endTime = DateUtil.offsetHour(endTime, -1);
             } else {
                 endTime.setField(DateField.MINUTE, 30);
             }

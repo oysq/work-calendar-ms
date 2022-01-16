@@ -29,4 +29,9 @@ public interface UserService {
      */
     User updateToken(User user);
 
+    /**
+     * 更新岗位薪资
+     */
+    void updatePostSalary(User user);
+
 }

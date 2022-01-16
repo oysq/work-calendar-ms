@@ -77,7 +77,21 @@ public class UserController {
             User resUser = userService.updateToken(user);
             return Res.success(resUser);
         } catch (Exception e) {
-            log.error("insertUser 异常", e);
+            log.error("refreshToken 异常", e);
+            return Res.fail(e.getMessage());
+        }
+    }
+
+    /**
+     * 更新岗位薪资
+     */
+    @PostMapping("updatePostSalary")
+    public Res updatePostSalary(@RequestBody User user) {
+        try {
+            userService.updatePostSalary(user);
+            return Res.success("更新成功");
+        } catch (Exception e) {
+            log.error("updatePostSalary 异常", e);
             return Res.fail(e.getMessage());
         }
     }
