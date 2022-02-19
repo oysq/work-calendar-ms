@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService {
                         .userId(UUID.randomUUID().toString().replaceAll("-", ""))
                         .userName(user.getUserName())
                         .password(user.getPassword())
-                        .createTime(DateUtil.formatTime(new Date()))
+                        .createTime(DateUtil.formatDateTime(new Date()))
                         .build()
         ) <= 0) {
             throw new RuntimeException("数据入库失败");
