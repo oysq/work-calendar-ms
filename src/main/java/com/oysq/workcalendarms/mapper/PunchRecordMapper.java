@@ -5,5 +5,5 @@ import com.oysq.workcalendarms.entity.PunchRecord;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PunchRecordMapper  extends BaseMapper<PunchRecord> {
+public interface PunchRecordMapper extends BaseMapper<PunchRecord> {
 }
