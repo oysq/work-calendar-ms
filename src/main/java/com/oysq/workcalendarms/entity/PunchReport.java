@@ -38,5 +38,15 @@ public class PunchReport {
      */
     private BigDecimal overtimePay;
 
+    /**
+     * 加班工资 - 工作日
+     */
+    private BigDecimal overtimePayWorkDay;
+
+    /**
+     * 加班工资 - 非工作日
+     */
+    private BigDecimal overtimePayNonWorkDay;
+
 
 }

@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Transactional
@@ -66,25 +66,47 @@ public class PunchRecordServiceImpl implements PunchRecordService {
                 .overtimeWorkDay(BigDecimal.ZERO)
                 .overtimeNonWorkDay(BigDecimal.ZERO)
                 .overtimePay(BigDecimal.ZERO)
+                .overtimePayWorkDay(BigDecimal.ZERO)
+                .overtimePayNonWorkDay(BigDecimal.ZERO)
                 .build();
 
         // 计算
         if (CollUtil.isNotEmpty(records)) {
             report.setOvertime(
-                    records.stream().map(PunchRecord::getOvertimeDuration).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)
-            );
-            report.setOvertimeWorkDay(
                     records.stream()
-                            .filter(item -> GlobalConstant.DEFAULT_MULTIPLY_RATE.equals(item.getMultiplyRate()))
                             .map(PunchRecord::getOvertimeDuration)
+                            .filter(Objects::nonNull)
                             .reduce(BigDecimal::add)
                             .orElse(BigDecimal.ZERO)
             );
             report.setOvertimeWorkDay(
-                    report.getOvertime().divide(report.getOvertimeWorkDay(), RoundingMode.HALF_UP)
+                    records.stream()
+                            .filter(item -> null != item.getOvertimeDuration()
+                                    && GlobalConstant.DEFAULT_MULTIPLY_RATE.compareTo(item.getMultiplyRate()) == 0)
+                            .map(PunchRecord::getOvertimeDuration)
+                            .reduce(BigDecimal::add)
+                            .orElse(BigDecimal.ZERO)
+            );
+            report.setOvertimeNonWorkDay(
+                    report.getOvertime().subtract(report.getOvertimeWorkDay())
             );
             report.setOvertimePay(
-                    records.stream().map(PunchRecord::getOvertimePay).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)
+                    records.stream()
+                            .map(PunchRecord::getOvertimePay)
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal::add)
+                            .orElse(BigDecimal.ZERO)
+            );
+            report.setOvertimePayWorkDay(
+                    records.stream()
+                            .filter(item -> null != item.getOvertimePay()
+                                    && GlobalConstant.DEFAULT_MULTIPLY_RATE.compareTo(item.getMultiplyRate()) == 0)
+                            .map(PunchRecord::getOvertimePay)
+                            .reduce(BigDecimal::add)
+                            .orElse(BigDecimal.ZERO)
+            );
+            report.setOvertimePayNonWorkDay(
+                    report.getOvertimePay().subtract(report.getOvertimePayWorkDay())
             );
         }
 
