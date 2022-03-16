@@ -1,6 +1,7 @@
 package com.oysq.workcalendarms.service;
 
 import com.oysq.workcalendarms.entity.PunchRecord;
+import com.oysq.workcalendarms.entity.PunchReport;
 
 import java.util.List;
 
@@ -13,6 +14,14 @@ public interface PunchRecordService {
      * @param endDate   yyyy/MM/dd
      */
     List<PunchRecord> selectRecord(String userId, String startDate, String endDate);
+
+    /**
+     * 获取报表
+     *
+     * @param startDate yyyy/MM/dd
+     * @param endDate   yyyy/MM/dd
+     */
+    PunchReport selectReport(String userId, String startDate, String endDate);
 
     /**
      * 更新开始时间

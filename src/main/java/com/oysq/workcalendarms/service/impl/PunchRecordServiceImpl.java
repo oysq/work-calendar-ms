@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.oysq.workcalendarms.constant.GlobalConstant;
 import com.oysq.workcalendarms.entity.PunchRecord;
+import com.oysq.workcalendarms.entity.PunchReport;
 import com.oysq.workcalendarms.entity.User;
 import com.oysq.workcalendarms.mapper.PunchRecordMapper;
 import com.oysq.workcalendarms.service.PunchRecordService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,15 +42,53 @@ public class PunchRecordServiceImpl implements PunchRecordService {
                 .eq(PunchRecord::getUserId, userId)
                 .orderByAsc(PunchRecord::getPunchDate);
 
-        if(StrUtil.isNotBlank(startDate)) {
+        if (StrUtil.isNotBlank(startDate)) {
             queryWrapper.ge(PunchRecord::getPunchDate, startDate);
         }
-        if(StrUtil.isNotBlank(endDate)) {
+        if (StrUtil.isNotBlank(endDate)) {
             queryWrapper.le(PunchRecord::getPunchDate, endDate);
         }
 
         // 查询并返回
         return punchRecordMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public PunchReport selectReport(String userId, String startDate, String endDate) {
+
+        // 查询
+        List<PunchRecord> records = this.selectRecord(userId, startDate, endDate);
+
+        // 待返回数据
+        PunchReport report = PunchReport.builder()
+                .userId(userId)
+                .overtime(BigDecimal.ZERO)
+                .overtimeWorkDay(BigDecimal.ZERO)
+                .overtimeNonWorkDay(BigDecimal.ZERO)
+                .overtimePay(BigDecimal.ZERO)
+                .build();
+
+        // 计算
+        if (CollUtil.isNotEmpty(records)) {
+            report.setOvertime(
+                    records.stream().map(PunchRecord::getOvertimeDuration).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)
+            );
+            report.setOvertimeWorkDay(
+                    records.stream()
+                            .filter(item -> GlobalConstant.DEFAULT_MULTIPLY_RATE.equals(item.getMultiplyRate()))
+                            .map(PunchRecord::getOvertimeDuration)
+                            .reduce(BigDecimal::add)
+                            .orElse(BigDecimal.ZERO)
+            );
+            report.setOvertimeWorkDay(
+                    report.getOvertime().divide(report.getOvertimeWorkDay(), RoundingMode.HALF_UP)
+            );
+            report.setOvertimePay(
+                    records.stream().map(PunchRecord::getOvertimePay).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)
+            );
+        }
+
+        return report;
     }
 
     /**
@@ -233,7 +273,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         PunchRecord dbRecord = getPunchOrError(user.getUserId(), record.getPunchDate());
 
         // 删除
-        if(punchRecordMapper.deleteById(dbRecord.getPunchId()) <= 0) {
+        if (punchRecordMapper.deleteById(dbRecord.getPunchId()) <= 0) {
             throw new RuntimeException("数据删除失败");
         }
 

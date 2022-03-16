@@ -2,8 +2,6 @@ package com.oysq.workcalendarms.controller;
 
 import com.oysq.workcalendarms.entity.PunchRecord;
 import com.oysq.workcalendarms.entity.Res;
-import com.oysq.workcalendarms.entity.User;
-import com.oysq.workcalendarms.mapper.UserMapper;
 import com.oysq.workcalendarms.service.PunchRecordService;
 import com.oysq.workcalendarms.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +32,21 @@ public class PunchRecordController {
             return Res.success(punchRecordService.selectRecord(param.get("userId"), param.get("startDate"), param.get("endDate")));
         } catch (Exception e) {
             log.error("查询打卡记录失败", e);
+            return Res.fail(e.getMessage());
+        }
+    }
+
+    /**
+     * 查询报表
+     */
+    @PostMapping("selectReport")
+    public Res selectReport(@RequestHeader(value = "C-TOKEN") String cToken, @RequestBody Map<String, String> param) {
+        // TODO 校验Token/SpringSecurity
+        try {
+            userService.checkTokenSecurity(cToken, param);
+            return Res.success(punchRecordService.selectReport(param.get("userId"), param.get("startDate"), param.get("endDate")));
+        } catch (Exception e) {
+            log.error("查询报表失败", e);
             return Res.fail(e.getMessage());
         }
     }
