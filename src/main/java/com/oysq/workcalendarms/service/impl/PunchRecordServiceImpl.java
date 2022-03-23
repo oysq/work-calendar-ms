@@ -62,6 +62,7 @@ public class PunchRecordServiceImpl implements PunchRecordService {
         // 待返回数据
         PunchReport report = PunchReport.builder()
                 .userId(userId)
+                .dayNum(0L)
                 .overtime(BigDecimal.ZERO)
                 .overtimeWorkDay(BigDecimal.ZERO)
                 .overtimeNonWorkDay(BigDecimal.ZERO)
@@ -72,6 +73,14 @@ public class PunchRecordServiceImpl implements PunchRecordService {
 
         // 计算
         if (CollUtil.isNotEmpty(records)) {
+            report.setDayNum(
+                    records.stream()
+                            .filter(item ->
+                                    Objects.nonNull(item.getStartTime())
+                                    && Objects.nonNull(item.getEndTime())
+                            )
+                            .count()
+            );
             report.setOvertime(
                     records.stream()
                             .map(PunchRecord::getOvertimeDuration)

@@ -19,6 +19,11 @@ public class PunchReport {
     private String userId;
 
     /**
+     * 加班天数
+     */
+    private Long dayNum;
+
+    /**
      * 加班时长
      */
     private BigDecimal overtime;
